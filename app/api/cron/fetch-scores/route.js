@@ -64,6 +64,18 @@ function parseEvents(events, fallbackWeek) {
         : away?.team?.abbreviation
       : null;
 
+    // Venue — always present in ESPN's payload.
+    const venue = competition?.venue;
+
+    // Weather — only populated by ESPN a few days out from kickoff, and
+    // generally absent for indoor/dome games.
+    const weather = competition?.weather;
+
+    // Odds/moneyline — only populated once sportsbooks post lines, usually
+    // a handful of days before kickoff. `odds` is an array of providers;
+    // we just take the first one ESPN gives us.
+    const oddsEntry = competition?.odds?.[0];
+
     return {
       id: event.id,
       week: event.week?.number ?? fallbackWeek,
@@ -74,6 +86,15 @@ function parseEvents(events, fallbackWeek) {
       winner,
       status: statusName,
       kickoff_time: event.date, // ISO string, matches timestamptz
+      venue_name: venue?.fullName ?? null,
+      venue_city: venue?.address?.city ?? null,
+      venue_state: venue?.address?.state ?? null,
+      indoor: venue?.indoor ?? false,
+      weather_condition: weather?.displayValue ?? null,
+      weather_temp: weather?.temperature ?? null,
+      home_moneyline: oddsEntry?.homeTeamOdds?.moneyLine ?? null,
+      away_moneyline: oddsEntry?.awayTeamOdds?.moneyLine ?? null,
+      odds_details: oddsEntry?.details ?? null,
     };
   });
 }

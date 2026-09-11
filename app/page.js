@@ -36,6 +36,22 @@ function isLocked(kickoffIso) {
   return new Date() > new Date(kickoffIso);
 }
 
+function weatherIcon(condition) {
+  if (!condition) return null;
+  const c = condition.toLowerCase();
+  if (c.includes('snow')) return '❄️';
+  if (c.includes('rain') || c.includes('shower') || c.includes('storm')) return '🌧️';
+  if (c.includes('wind')) return '💨';
+  if (c.includes('cloud')) return '☁️';
+  if (c.includes('sun') || c.includes('clear')) return '☀️';
+  return '🌤️';
+}
+
+function formatMoneyline(ml) {
+  if (ml === null || ml === undefined) return null;
+  return ml > 0 ? `+${ml}` : `${ml}`;
+}
+
 // ---------------------------------------------------------------------------
 
 export default function Page() {
@@ -531,6 +547,10 @@ function GameCard({ game, userPick, onPick, saving }) {
   const isFinal = game.status === 'STATUS_FINAL';
   const isLive = game.status === 'STATUS_IN_PROGRESS';
 
+  const venueLine = [game.venue_name, [game.venue_city, game.venue_state].filter(Boolean).join(', ')]
+    .filter(Boolean)
+    .join(' — ');
+
   return (
     <div className="bg-panel border border-fieldLine rounded-lg overflow-hidden">
       <div className="flex items-center justify-between px-4 pt-3 text-xs text-chalkDim">
@@ -544,22 +564,39 @@ function GameCard({ game, userPick, onPick, saving }) {
         </span>
       </div>
 
+      {venueLine && (
+        <div className="flex items-center justify-between px-4 pt-1 text-[11px] text-chalkDim">
+          <span className="truncate">{venueLine}</span>
+          {game.indoor ? (
+            <span className="shrink-0 ml-2">🏟️ Dome</span>
+          ) : (
+            game.weather_condition && (
+              <span className="shrink-0 ml-2">
+                {weatherIcon(game.weather_condition)} {game.weather_condition}
+                {game.weather_temp != null ? ` ${game.weather_temp}°` : ''}
+              </span>
+            )
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 divide-x divide-fieldLine mt-2">
         <TeamButton
           abbr={game.away_team}
           score={game.away_score}
           showScore={isLive || isFinal}
+          moneyline={formatMoneyline(game.away_moneyline)}
           selected={userPick === game.away_team}
           isWinner={isFinal && game.winner === game.away_team}
           disabled={locked}
           saving={saving}
           onClick={() => onPick(game.away_team)}
-          flipHelmet
         />
         <TeamButton
           abbr={game.home_team}
           score={game.home_score}
           showScore={isLive || isFinal}
+          moneyline={formatMoneyline(game.home_moneyline)}
           selected={userPick === game.home_team}
           isWinner={isFinal && game.winner === game.home_team}
           disabled={locked}
@@ -597,7 +634,7 @@ function TeamHelmet({ abbr, flip }) {
   );
 }
 
-function TeamButton({ abbr, score, showScore, selected, isWinner, disabled, saving, onClick, flipHelmet }) {
+function TeamButton({ abbr, score, showScore, moneyline, selected, isWinner, disabled, saving, onClick, flipHelmet }) {
   return (
     <button
       onClick={onClick}
@@ -616,6 +653,9 @@ function TeamButton({ abbr, score, showScore, selected, isWinner, disabled, savi
       </span>
       <span className="text-xs text-chalkDim">{teamLabel(abbr)}</span>
       {showScore && <span className="font-mono-score text-lg mt-1 text-chalk">{score}</span>}
+      {moneyline && (
+        <span className="font-mono-score text-[11px] text-chalkDim">{moneyline}</span>
+      )}
       {selected && <span className="text-[10px] uppercase tracking-wider text-hashGold mt-1">Your pick</span>}
     </button>
   );

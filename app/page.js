@@ -88,7 +88,7 @@ export default function Page() {
     <main className="min-h-screen pb-20">
       <SiteHeader session={session} profile={profile} setProfile={setProfile} authLoading={authLoading} />
 
-      <div className="max-w-4xl mx-auto px-4 mt-6">
+      <div className="max-w-5xl mx-auto px-4 mt-6">
         <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
 
         {activeTab === 'picks' ? (
@@ -113,9 +113,9 @@ export default function Page() {
 function SiteHeader({ session, profile, setProfile, authLoading }) {
   return (
     <header className="border-b border-fieldLine bg-panel/60 backdrop-blur">
-      <div className="max-w-4xl mx-auto px-4 py-5 flex items-center justify-between gap-4">
+      <div className="max-w-5xl mx-auto px-4 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="font-display text-4xl leading-none text-hashGold">Family Pick&apos;Em</h1>
+          <h1 className="font-display text-3xl sm:text-4xl leading-none text-hashGold">Family Pick&apos;Em</h1>
           <p className="text-chalkDim text-sm mt-1">Think you know ball? Pick winners. Repeat weekly. Have Fun!</p>
         </div>
         <AuthWidget session={session} profile={profile} setProfile={setProfile} authLoading={authLoading} />
@@ -222,10 +222,10 @@ function AuthWidget({ session, profile, setProfile, authLoading }) {
   // Not signed in
   if (!session) {
     return (
-      <div className="flex flex-col items-end gap-1.5">
+      <div className="flex flex-col items-start sm:items-end gap-1.5 w-full sm:w-auto">
         <form
           onSubmit={authMode === 'magic' ? handleSendLink : handlePasswordSignIn}
-          className="flex items-center gap-2"
+          className="flex flex-wrap items-center gap-2 w-full sm:w-auto"
         >
           {authMode === 'magic' && otpSent ? (
             <p className="text-win text-sm">Check {email} for a sign-in link.</p>
@@ -237,7 +237,7 @@ function AuthWidget({ session, profile, setProfile, authLoading }) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@family.com"
-                className="bg-field border border-fieldLine rounded px-3 py-1.5 text-sm text-chalk placeholder:text-chalkDim focus:border-hashGold outline-none"
+                className="flex-1 min-w-[160px] sm:flex-none sm:w-48 bg-field border border-fieldLine rounded px-3 py-1.5 text-sm text-chalk placeholder:text-chalkDim focus:border-hashGold outline-none"
               />
               {authMode === 'password' && (
                 <input
@@ -246,19 +246,19 @@ function AuthWidget({ session, profile, setProfile, authLoading }) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Password"
-                  className="bg-field border border-fieldLine rounded px-3 py-1.5 text-sm text-chalk placeholder:text-chalkDim focus:border-hashGold outline-none"
+                  className="flex-1 min-w-[120px] sm:flex-none sm:w-36 bg-field border border-fieldLine rounded px-3 py-1.5 text-sm text-chalk placeholder:text-chalkDim focus:border-hashGold outline-none"
                 />
               )}
               <button
                 type="submit"
                 disabled={busy}
-                className="bg-hashGold text-field font-semibold text-sm px-3 py-1.5 rounded hover:brightness-110 disabled:opacity-50"
+                className="bg-hashGold text-field font-semibold text-sm px-3 py-1.5 rounded hover:brightness-110 disabled:opacity-50 shrink-0"
               >
                 {busy ? (authMode === 'magic' ? 'Sending…' : 'Signing in…') : 'Sign in'}
               </button>
             </>
           )}
-          {error && <p className="text-loss text-xs ml-2">{error}</p>}
+          {error && <p className="text-loss text-xs w-full sm:w-auto sm:ml-2">{error}</p>}
         </form>
 
         <button
@@ -279,31 +279,31 @@ function AuthWidget({ session, profile, setProfile, authLoading }) {
   // Signed in but no display name yet
   if (!profile) {
     return (
-      <form onSubmit={handleSaveName} className="flex items-center gap-2">
+      <form onSubmit={handleSaveName} className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
         <input
           type="text"
           required
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="Pick a display name"
-          className="bg-field border border-fieldLine rounded px-3 py-1.5 text-sm text-chalk placeholder:text-chalkDim focus:border-hashGold outline-none"
+          className="flex-1 min-w-[160px] sm:flex-none sm:w-48 bg-field border border-fieldLine rounded px-3 py-1.5 text-sm text-chalk placeholder:text-chalkDim focus:border-hashGold outline-none"
         />
         <button
           type="submit"
           disabled={busy}
-          className="bg-hashGold text-field font-semibold text-sm px-3 py-1.5 rounded hover:brightness-110 disabled:opacity-50"
+          className="bg-hashGold text-field font-semibold text-sm px-3 py-1.5 rounded hover:brightness-110 disabled:opacity-50 shrink-0"
         >
           Save
         </button>
-        {error && <p className="text-loss text-xs">{error}</p>}
+        {error && <p className="text-loss text-xs w-full sm:w-auto">{error}</p>}
       </form>
     );
   }
 
   // Fully signed in
   return (
-    <div className="flex flex-col items-end gap-1.5">
-      <div className="flex items-center gap-3">
+    <div className="flex flex-col items-start sm:items-end gap-1.5 w-full sm:w-auto">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         <span className="text-sm text-chalk">
           Playing as <span className="text-hashGold font-semibold">{profile.display_name}</span>
         </span>
@@ -326,7 +326,7 @@ function AuthWidget({ session, profile, setProfile, authLoading }) {
       </div>
 
       {showSetPassword && (
-        <form onSubmit={handleSetPassword} className="flex items-center gap-2">
+        <form onSubmit={handleSetPassword} className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {passwordSaved ? (
             <p className="text-win text-sm">
               Password set — next time, sign in with your email and that password.
@@ -340,7 +340,7 @@ function AuthWidget({ session, profile, setProfile, authLoading }) {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="New password"
-                className="bg-field border border-fieldLine rounded px-3 py-1.5 text-sm text-chalk placeholder:text-chalkDim focus:border-hashGold outline-none"
+                className="flex-1 min-w-[120px] sm:flex-none sm:w-36 bg-field border border-fieldLine rounded px-3 py-1.5 text-sm text-chalk placeholder:text-chalkDim focus:border-hashGold outline-none"
               />
               <input
                 type="password"
@@ -349,18 +349,18 @@ function AuthWidget({ session, profile, setProfile, authLoading }) {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm"
-                className="bg-field border border-fieldLine rounded px-3 py-1.5 text-sm text-chalk placeholder:text-chalkDim focus:border-hashGold outline-none"
+                className="flex-1 min-w-[120px] sm:flex-none sm:w-36 bg-field border border-fieldLine rounded px-3 py-1.5 text-sm text-chalk placeholder:text-chalkDim focus:border-hashGold outline-none"
               />
               <button
                 type="submit"
                 disabled={busy}
-                className="bg-hashGold text-field font-semibold text-sm px-3 py-1.5 rounded hover:brightness-110 disabled:opacity-50"
+                className="bg-hashGold text-field font-semibold text-sm px-3 py-1.5 rounded hover:brightness-110 disabled:opacity-50 shrink-0"
               >
                 {busy ? 'Saving…' : 'Save'}
               </button>
             </>
           )}
-          {error && <p className="text-loss text-xs">{error}</p>}
+          {error && <p className="text-loss text-xs w-full sm:w-auto">{error}</p>}
         </form>
       )}
     </div>
@@ -377,12 +377,12 @@ function TabBar({ activeTab, setActiveTab }) {
     { id: 'leaderboard', label: 'Leaderboard & Recap' },
   ];
   return (
-    <div className="flex gap-1 border-b border-fieldLine">
+    <div className="flex gap-1 border-b border-fieldLine overflow-x-auto">
       {tabs.map((t) => (
         <button
           key={t.id}
           onClick={() => setActiveTab(t.id)}
-          className={`px-4 py-2.5 text-sm font-semibold transition-colors border-b-2 -mb-px ${
+          className={`px-3 sm:px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors border-b-2 -mb-px ${
             activeTab === t.id
               ? 'border-hashGold text-hashGold'
               : 'border-transparent text-chalkDim hover:text-chalk'
@@ -492,7 +492,7 @@ function PicksTab({ session, profile, selectedWeek, setSelectedWeek }) {
 
   return (
     <section className="mt-4">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <h2 className="font-display text-2xl text-chalk">Week {selectedWeek} Games</h2>
         <WeekSelector selectedWeek={selectedWeek} setSelectedWeek={setSelectedWeek} />
       </div>
@@ -510,7 +510,7 @@ function PicksTab({ session, profile, selectedWeek, setSelectedWeek }) {
           No games synced for this week yet. Once the score-sync cron route runs, they&apos;ll show up here.
         </p>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid gap-3 md:grid-cols-2">
           {games.map((game) => (
             <GameCard
               key={game.id}
@@ -591,7 +591,7 @@ function TeamButton({ abbr, score, showScore, selected, isWinner, disabled, savi
       } ${disabled ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}`}
     >
       <span
-        className={`font-display text-2xl tracking-wide ${
+        className={`font-display text-xl sm:text-2xl tracking-wide ${
           selected ? 'text-hashGold' : isWinner ? 'text-win' : 'text-chalk'
         }`}
       >
@@ -711,7 +711,7 @@ function LeaderboardTab({ selectedWeek, setSelectedWeek }) {
 
   return (
     <section className="mt-4">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <h2 className="font-display text-2xl text-chalk">Family Leaderboard</h2>
         <WeekSelector selectedWeek={selectedWeek} setSelectedWeek={setSelectedWeek} />
       </div>
@@ -721,8 +721,8 @@ function LeaderboardTab({ selectedWeek, setSelectedWeek }) {
       ) : standings.length === 0 ? (
         <p className="text-chalkDim text-sm">No players yet — invite the family to sign in and make picks.</p>
       ) : (
-        <div className="bg-panel border border-fieldLine rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-panel border border-fieldLine rounded-lg overflow-x-auto">
+          <table className="w-full text-sm min-w-[420px]">
             <thead>
               <tr className="text-chalkDim text-left border-b border-fieldLine">
                 <th className="px-4 py-2.5 font-normal">Player</th>

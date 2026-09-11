@@ -116,7 +116,7 @@ function SiteHeader({ session, profile, setProfile, authLoading }) {
       <div className="max-w-4xl mx-auto px-4 py-5 flex items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-4xl leading-none text-hashGold">Family Pick&apos;Em</h1>
-          <p className="text-chalkDim text-sm mt-1">Pick winners. Beat your cousins. Repeat weekly.</p>
+          <p className="text-chalkDim text-sm mt-1">Think you know ball? Pick winners. Repeat weekly. Have Fun!</p>
         </div>
         <AuthWidget session={session} profile={profile} setProfile={setProfile} authLoading={authLoading} />
       </div>

@@ -133,6 +133,12 @@ function AuthWidget({ session, profile, setProfile, authLoading }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
+  // "Set a password" panel, shown once already signed in
+  const [showSetPassword, setShowSetPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordSaved, setPasswordSaved] = useState(false);
+
   const handleSendLink = async (e) => {
     e.preventDefault();
     setError('');
@@ -181,6 +187,32 @@ function AuthWidget({ session, profile, setProfile, authLoading }) {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+  };
+
+  const handleSetPassword = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    setBusy(true);
+    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+    setBusy(false);
+
+    if (updateError) {
+      setError(updateError.message);
+    } else {
+      setPasswordSaved(true);
+      setNewPassword('');
+      setConfirmPassword('');
+    }
   };
 
   if (authLoading) {

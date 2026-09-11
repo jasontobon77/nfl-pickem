@@ -521,7 +521,7 @@ function GameCard({ game, userPick, onPick, saving }) {
           Your pick: <span className="text-hashGold font-semibold">{teamLabel(userPick)}</span>
           {isFinal && (
             <span className={`ml-2 font-semibold ${userPick === game.winner ? 'text-win' : 'text-loss'}`}>
-              {userPick === game.winner ? '✓ Correct' : '✗ Missed'}
+              {userPick === game.winner ? '✓ Win' : '✗ Loss'}
             </span>
           )}
         </div>

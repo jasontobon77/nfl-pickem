@@ -116,7 +116,7 @@ function SiteHeader({ session, profile, setProfile, authLoading }) {
       <div className="max-w-4xl mx-auto px-4 py-5 flex items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-4xl leading-none text-hashGold">Family Pick&apos;Em</h1>
-          <p className="text-chalkDim text-sm mt-1">Think You Know Ball? Pick your winners. Repeat Weekly.</p>
+          <p className="text-chalkDim text-sm mt-1">Pick winners. Beat your cousins. Repeat weekly.</p>
         </div>
         <AuthWidget session={session} profile={profile} setProfile={setProfile} authLoading={authLoading} />
       </div>
@@ -125,7 +125,9 @@ function SiteHeader({ session, profile, setProfile, authLoading }) {
 }
 
 function AuthWidget({ session, profile, setProfile, authLoading }) {
+  const [authMode, setAuthMode] = useState('magic'); // 'magic' | 'password'
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [busy, setBusy] = useState(false);
@@ -145,6 +147,19 @@ function AuthWidget({ session, profile, setProfile, authLoading }) {
     } else {
       setOtpSent(true);
     }
+  };
+
+  const handlePasswordSignIn = async (e) => {
+    e.preventDefault();
+    setError('');
+    setBusy(true);
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    setBusy(false);
+    if (signInError) {
+      setError(signInError.message);
+    }
+    // On success, the onAuthStateChange listener in the parent component
+    // picks up the new session automatically — nothing else to do here.
   };
 
   const handleSaveName = async (e) => {
@@ -175,30 +190,57 @@ function AuthWidget({ session, profile, setProfile, authLoading }) {
   // Not signed in
   if (!session) {
     return (
-      <form onSubmit={handleSendLink} className="flex items-center gap-2">
-        {otpSent ? (
-          <p className="text-win text-sm">Check {email} for a sign-in link.</p>
-        ) : (
-          <>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@family.com"
-              className="bg-field border border-fieldLine rounded px-3 py-1.5 text-sm text-chalk placeholder:text-chalkDim focus:border-hashGold outline-none"
-            />
-            <button
-              type="submit"
-              disabled={busy}
-              className="bg-hashGold text-field font-semibold text-sm px-3 py-1.5 rounded hover:brightness-110 disabled:opacity-50"
-            >
-              {busy ? 'Sending…' : 'Sign in'}
-            </button>
-          </>
-        )}
-        {error && <p className="text-loss text-xs ml-2">{error}</p>}
-      </form>
+      <div className="flex flex-col items-end gap-1.5">
+        <form
+          onSubmit={authMode === 'magic' ? handleSendLink : handlePasswordSignIn}
+          className="flex items-center gap-2"
+        >
+          {authMode === 'magic' && otpSent ? (
+            <p className="text-win text-sm">Check {email} for a sign-in link.</p>
+          ) : (
+            <>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@family.com"
+                className="bg-field border border-fieldLine rounded px-3 py-1.5 text-sm text-chalk placeholder:text-chalkDim focus:border-hashGold outline-none"
+              />
+              {authMode === 'password' && (
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Password"
+                  className="bg-field border border-fieldLine rounded px-3 py-1.5 text-sm text-chalk placeholder:text-chalkDim focus:border-hashGold outline-none"
+                />
+              )}
+              <button
+                type="submit"
+                disabled={busy}
+                className="bg-hashGold text-field font-semibold text-sm px-3 py-1.5 rounded hover:brightness-110 disabled:opacity-50"
+              >
+                {busy ? (authMode === 'magic' ? 'Sending…' : 'Signing in…') : 'Sign in'}
+              </button>
+            </>
+          )}
+          {error && <p className="text-loss text-xs ml-2">{error}</p>}
+        </form>
+
+        <button
+          type="button"
+          onClick={() => {
+            setAuthMode(authMode === 'magic' ? 'password' : 'magic');
+            setError('');
+            setOtpSent(false);
+          }}
+          className="text-[11px] text-chalkDim hover:text-chalk underline underline-offset-2"
+        >
+          {authMode === 'magic' ? 'Have a password instead? Sign in with it' : 'Use an email link instead'}
+        </button>
+      </div>
     );
   }
 
@@ -447,7 +489,7 @@ function GameCard({ game, userPick, onPick, saving }) {
           Your pick: <span className="text-hashGold font-semibold">{teamLabel(userPick)}</span>
           {isFinal && (
             <span className={`ml-2 font-semibold ${userPick === game.winner ? 'text-win' : 'text-loss'}`}>
-              {userPick === game.winner ? '✓ Win' : '✗ Loss'}
+              {userPick === game.winner ? '✓ Correct' : '✗ Missed'}
             </span>
           )}
         </div>

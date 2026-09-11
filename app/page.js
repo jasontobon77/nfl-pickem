@@ -116,7 +116,7 @@ function SiteHeader({ session, profile, setProfile, authLoading }) {
       <div className="max-w-5xl mx-auto px-4 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
           <h1 className="font-display text-3xl sm:text-4xl leading-none text-hashGold">Family Pick&apos;Em</h1>
-          <p className="text-chalkDim text-sm mt-1">Think you know ball? Pick winners. Repeat weekly. Have Fun!</p>
+          <p className="text-chalkDim text-sm mt-1">Think you know ball? Pick winners. Repeat weekly. Have fun!</p>
         </div>
         <AuthWidget session={session} profile={profile} setProfile={setProfile} authLoading={authLoading} />
       </div>
@@ -554,6 +554,7 @@ function GameCard({ game, userPick, onPick, saving }) {
           disabled={locked}
           saving={saving}
           onClick={() => onPick(game.away_team)}
+          flipHelmet
         />
         <TeamButton
           abbr={game.home_team}
@@ -581,7 +582,22 @@ function GameCard({ game, userPick, onPick, saving }) {
   );
 }
 
-function TeamButton({ abbr, score, showScore, selected, isWinner, disabled, saving, onClick }) {
+function TeamHelmet({ abbr, flip }) {
+  const [failed, setFailed] = useState(false);
+  if (!abbr || failed) return null;
+
+  return (
+    <img
+      src={`https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/${abbr.toLowerCase()}.png`}
+      alt=""
+      aria-hidden="true"
+      onError={() => setFailed(true)}
+      className={`w-12 h-12 sm:w-14 sm:h-14 object-contain drop-shadow-md ${flip ? '-scale-x-100' : ''}`}
+    />
+  );
+}
+
+function TeamButton({ abbr, score, showScore, selected, isWinner, disabled, saving, onClick, flipHelmet }) {
   return (
     <button
       onClick={onClick}
@@ -590,6 +606,7 @@ function TeamButton({ abbr, score, showScore, selected, isWinner, disabled, savi
         selected ? 'bg-hashGold/15' : 'hover:bg-panelRaised'
       } ${disabled ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}`}
     >
+      <TeamHelmet abbr={abbr} flip={flipHelmet} />
       <span
         className={`font-display text-xl sm:text-2xl tracking-wide ${
           selected ? 'text-hashGold' : isWinner ? 'text-win' : 'text-chalk'

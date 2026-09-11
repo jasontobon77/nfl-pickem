@@ -68,13 +68,18 @@ function parseEvents(events, fallbackWeek) {
     const venue = competition?.venue;
 
     // Weather — only populated by ESPN a few days out from kickoff, and
-    // generally absent for indoor/dome games.
-    const weather = competition?.weather;
+    // generally absent for indoor/dome games or games already played.
+    // Note: this lives on the EVENT object, not the competition object.
+    const weather = event.weather;
 
     // Odds/moneyline — only populated once sportsbooks post lines, usually
     // a handful of days before kickoff. `odds` is an array of providers;
-    // we just take the first one ESPN gives us.
+    // we just take the first one ESPN gives us. Moneyline values live in a
+    // nested moneyline.home/away.close.odds string, e.g. "-198" or "+164".
     const oddsEntry = competition?.odds?.[0];
+    const moneylineRaw = oddsEntry?.moneyline;
+    const homeMoneylineStr = moneylineRaw?.home?.close?.odds ?? moneylineRaw?.home?.open?.odds ?? null;
+    const awayMoneylineStr = moneylineRaw?.away?.close?.odds ?? moneylineRaw?.away?.open?.odds ?? null;
 
     return {
       id: event.id,
@@ -92,8 +97,8 @@ function parseEvents(events, fallbackWeek) {
       indoor: venue?.indoor ?? false,
       weather_condition: weather?.displayValue ?? null,
       weather_temp: weather?.temperature ?? null,
-      home_moneyline: oddsEntry?.homeTeamOdds?.moneyLine ?? null,
-      away_moneyline: oddsEntry?.awayTeamOdds?.moneyLine ?? null,
+      home_moneyline: homeMoneylineStr ? parseInt(homeMoneylineStr, 10) : null,
+      away_moneyline: awayMoneylineStr ? parseInt(awayMoneylineStr, 10) : null,
       odds_details: oddsEntry?.details ?? null,
     };
   });

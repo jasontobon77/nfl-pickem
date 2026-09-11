@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --field: #0e2119;
+  --field-line: #1c3a2c;
+  --panel: #14291f;
+  --panel-raised: #1a3327;
+  --chalk: #edefe9;
+  --chalk-dim: #a9b6ac;
+  --hash-gold: #e3b23c;
+  --win: #5fa987;
+  --loss: #c1554a;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--field);
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 79px,
+      var(--field-line) 79px,
+      var(--field-line) 80px
+    );
+  color: var(--chalk);
+  font-family: var(--font-body), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-display), sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.font-mono-score {
+  font-family: var(--font-mono), monospace;
+}
+
+/* Visible keyboard focus everywhere, styled to match the scoreboard theme */
+:focus-visible {
+  outline: 2px solid var(--hash-gold);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,8 +1,1 @@
-{
-  "crons": [
-    {
-      "path": "/api/cron/fetch-scores",
-      "schedule": "*/5 * * * *"
-    }
-  ]
-}
+{}

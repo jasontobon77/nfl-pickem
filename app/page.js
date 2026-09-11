@@ -125,7 +125,7 @@ function SiteHeader({ session, profile, setProfile, authLoading }) {
 }
 
 function AuthWidget({ session, profile, setProfile, authLoading }) {
-  const [authMode, setAuthMode] = useState('magic'); // 'magic' | 'password'
+  const [authMode, setAuthMode] = useState('password'); // 'magic' | 'password'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otpSent, setOtpSent] = useState(false);
@@ -302,16 +302,67 @@ function AuthWidget({ session, profile, setProfile, authLoading }) {
 
   // Fully signed in
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-sm text-chalk">
-        Playing as <span className="text-hashGold font-semibold">{profile.display_name}</span>
-      </span>
-      <button
-        onClick={handleSignOut}
-        className="text-xs text-chalkDim border border-fieldLine rounded px-2.5 py-1.5 hover:text-chalk hover:border-chalkDim"
-      >
-        Sign out
-      </button>
+    <div className="flex flex-col items-end gap-1.5">
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-chalk">
+          Playing as <span className="text-hashGold font-semibold">{profile.display_name}</span>
+        </span>
+        <button
+          onClick={() => {
+            setShowSetPassword((v) => !v);
+            setError('');
+            setPasswordSaved(false);
+          }}
+          className="text-xs text-chalkDim border border-fieldLine rounded px-2.5 py-1.5 hover:text-chalk hover:border-chalkDim"
+        >
+          {showSetPassword ? 'Close' : 'Set a password'}
+        </button>
+        <button
+          onClick={handleSignOut}
+          className="text-xs text-chalkDim border border-fieldLine rounded px-2.5 py-1.5 hover:text-chalk hover:border-chalkDim"
+        >
+          Sign out
+        </button>
+      </div>
+
+      {showSetPassword && (
+        <form onSubmit={handleSetPassword} className="flex items-center gap-2">
+          {passwordSaved ? (
+            <p className="text-win text-sm">
+              Password set — next time, sign in with your email and that password.
+            </p>
+          ) : (
+            <>
+              <input
+                type="password"
+                required
+                minLength={6}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="New password"
+                className="bg-field border border-fieldLine rounded px-3 py-1.5 text-sm text-chalk placeholder:text-chalkDim focus:border-hashGold outline-none"
+              />
+              <input
+                type="password"
+                required
+                minLength={6}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm"
+                className="bg-field border border-fieldLine rounded px-3 py-1.5 text-sm text-chalk placeholder:text-chalkDim focus:border-hashGold outline-none"
+              />
+              <button
+                type="submit"
+                disabled={busy}
+                className="bg-hashGold text-field font-semibold text-sm px-3 py-1.5 rounded hover:brightness-110 disabled:opacity-50"
+              >
+                {busy ? 'Saving…' : 'Save'}
+              </button>
+            </>
+          )}
+          {error && <p className="text-loss text-xs">{error}</p>}
+        </form>
+      )}
     </div>
   );
 }

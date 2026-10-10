@@ -59,7 +59,32 @@ export default function Page() {
   const [profile, setProfile] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('picks'); // 'picks' | 'leaderboard'
-  const [selectedWeek, setSelectedWeek] = useState(1);
+  const [selectedWeek, setSelectedWeek] = useState(null); // null until we work out the current week
+
+  // ---- Pick the current week on first load --------------------------------
+  // "Current" = the earliest week that still has an unfinished game. Once the
+  // last game of a week goes final, the app rolls forward to the next week.
+  // If every game is final (season over) we land on the last week; if the
+  // games table is empty or the lookup fails we fall back to Week 1.
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      let week = 1;
+      const { data, error } = await supabase.from('games').select('week, status');
+
+      if (!error && data && data.length > 0) {
+        const openWeeks = data.filter((g) => g.status !== 'STATUS_FINAL').map((g) => g.week);
+        week = openWeeks.length > 0 ? Math.min(...openWeeks) : Math.max(...data.map((g) => g.week));
+      }
+
+      if (!cancelled) setSelectedWeek(week);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // ---- Auth bootstrap -----------------------------------------------------
   useEffect(() => {
@@ -107,7 +132,9 @@ export default function Page() {
       <div className="max-w-5xl mx-auto px-4 mt-6">
         <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-        {activeTab === 'picks' ? (
+        {selectedWeek === null ? (
+          <p className="text-chalkDim text-sm mt-6">Loading this week&apos;s games…</p>
+        ) : activeTab === 'picks' ? (
           <PicksTab
             session={session}
             profile={profile}
@@ -532,6 +559,7 @@ function PicksTab({ session, profile, selectedWeek, setSelectedWeek }) {
               key={game.id}
               game={game}
               userPick={picks[game.id]}
+              signedIn={!!profile}
               onPick={(team) => handlePick(game, team)}
               saving={savingGameId === game.id}
             />
@@ -542,7 +570,7 @@ function PicksTab({ session, profile, selectedWeek, setSelectedWeek }) {
   );
 }
 
-function GameCard({ game, userPick, onPick, saving }) {
+function GameCard({ game, userPick, signedIn, onPick, saving }) {
   const locked = isLocked(game.kickoff_time);
   const isFinal = game.status === 'STATUS_FINAL';
   const isLive = game.status === 'STATUS_IN_PROGRESS';
@@ -605,6 +633,12 @@ function GameCard({ game, userPick, onPick, saving }) {
         />
       </div>
 
+      {!userPick && signedIn && locked && (
+        <div className="px-4 py-2 text-xs text-loss">
+          No pick made — this one counts as a loss.
+        </div>
+      )}
+
       {userPick && (
         <div className="px-4 py-2 text-xs text-chalkDim">
           Your pick: <span className="text-hashGold font-semibold">{teamLabel(userPick)}</span>
@@ -665,6 +699,29 @@ function TeamButton({ abbr, score, showScore, moneyline, selected, isWinner, dis
 // Tab 2: Leaderboard & AI Recap
 // ---------------------------------------------------------------------------
 
+// Supabase returns at most 1,000 rows per request, and a full season of picks
+// will pass that. This pages through the whole table so nothing gets dropped.
+async function fetchAllPicks() {
+  const pageSize = 1000;
+  const all = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('picks')
+      .select('user_id, game_id, is_correct')
+      .order('id', { ascending: true })
+      .range(from, from + pageSize - 1);
+
+    if (error) return { data: null, error };
+    all.push(...data);
+    if (data.length < pageSize) break;
+    from += pageSize;
+  }
+
+  return { data: all, error: null };
+}
+
 function LeaderboardTab({ selectedWeek, setSelectedWeek }) {
   const [standings, setStandings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -677,9 +734,9 @@ function LeaderboardTab({ selectedWeek, setSelectedWeek }) {
 
     const [{ data: profiles, error: profilesErr }, { data: games, error: gamesErr }, { data: picks, error: picksErr }] =
       await Promise.all([
-        supabase.from('profiles').select('id, display_name'),
-        supabase.from('games').select('id, week'),
-        supabase.from('picks').select('user_id, game_id, is_correct'),
+        supabase.from('profiles').select('id, display_name, created_at'),
+        supabase.from('games').select('id, week, status, kickoff_time'),
+        fetchAllPicks(),
       ]);
 
     if (profilesErr || gamesErr || picksErr) {
@@ -687,20 +744,33 @@ function LeaderboardTab({ selectedWeek, setSelectedWeek }) {
       return;
     }
 
-    const gameWeekById = new Map((games ?? []).map((g) => [g.id, g.week]));
+    const gameById = new Map((games ?? []).map((g) => [g.id, g]));
 
     const byUser = new Map(
       (profiles ?? []).map((p) => [
         p.id,
-        { userId: p.id, displayName: p.display_name, totalWins: 0, totalLosses: 0, weekWins: 0, weekLosses: 0 },
+        {
+          userId: p.id,
+          displayName: p.display_name,
+          joinedAt: p.created_at,
+          totalWins: 0,
+          totalLosses: 0,
+          weekWins: 0,
+          weekLosses: 0,
+        },
       ])
     );
 
+    // Which (user, game) combinations have a pick on file
+    const pickedKeys = new Set();
+
     for (const pick of picks ?? []) {
+      pickedKeys.add(`${pick.user_id}:${pick.game_id}`);
+
       const entry = byUser.get(pick.user_id);
       if (!entry || pick.is_correct === null || pick.is_correct === undefined) continue;
 
-      const week = gameWeekById.get(pick.game_id);
+      const week = gameById.get(pick.game_id)?.week;
 
       if (pick.is_correct) {
         entry.totalWins += 1;
@@ -711,7 +781,25 @@ function LeaderboardTab({ selectedWeek, setSelectedWeek }) {
       }
     }
 
-    const rows = Array.from(byUser.values()).sort((a, b) => b.totalWins - a.totalWins);
+    // Auto-loss: any finished game where a player has no pick on file counts
+    // as a loss — but only for games that kicked off after that player joined,
+    // so someone who signs up in Week 5 isn't charged for Weeks 1-4.
+    for (const game of games ?? []) {
+      if (game.status !== 'STATUS_FINAL') continue;
+      const kickoff = new Date(game.kickoff_time);
+
+      for (const entry of byUser.values()) {
+        if (entry.joinedAt && kickoff < new Date(entry.joinedAt)) continue;
+        if (pickedKeys.has(`${entry.userId}:${game.id}`)) continue;
+
+        entry.totalLosses += 1;
+        if (game.week === selectedWeek) entry.weekLosses += 1;
+      }
+    }
+
+    const rows = Array.from(byUser.values()).sort(
+      (a, b) => b.totalWins - a.totalWins || a.totalLosses - b.totalLosses
+    );
     setStandings(rows);
     setLoading(false);
   }, [selectedWeek]);
